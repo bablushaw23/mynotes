@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mynotes/firebase_options.dart';
 
 void main() {
+  WidgetsFlutterBinding
+      .ensureInitialized(); // this will ensure that binding is initialized
   runApp(MaterialApp(
     title: 'Flutter Demo',
     theme: ThemeData(primarySwatch: Colors.blue),
@@ -46,39 +48,48 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text("Register"),
       ),
-      body: Column(
-        children: [
-          TextField(
-            controller: _email,
-            keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(hintText: "Email"),
-          ), // for email
-          TextField(
-            controller: _password,
-            keyboardType: TextInputType.visiblePassword,
-            obscureText: true,
-            enableSuggestions: false,
-            autocorrect: false,
-            decoration: const InputDecoration(
-              hintText: "Password",
-            ),
-          ), // for password
-          TextButton(
-            onPressed: () async {
-              await Firebase.initializeApp(
-                  // u have to initialize firebase instance before using any firebase services
-                  options: DefaultFirebaseOptions.currentPlatform);
-              final email = _email.text;
-              final password = _password.text;
-              final userCred = await FirebaseAuth.instance
-                  .createUserWithEmailAndPassword(
-                      email: email, password: password);
-              print(userCred); // pring in logs
-            },
-            child: const Text("Register"),
-          ),
-        ],
-      ),
+      body: FutureBuilder(
+          future: Firebase.initializeApp(
+              // u have to initialize firebase instance before using any firebase services
+              options: DefaultFirebaseOptions.currentPlatform),
+          builder: (context, snapshot) {
+            // snapshot contains state of future like waiting, active, done etc
+            switch (snapshot.connectionState) {
+              case ConnectionState.done:
+                return Column(//
+                    children: [
+                  TextField(
+                    controller: _email,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(hintText: "Email"),
+                  ), // for email
+                  TextField(
+                    controller: _password,
+                    keyboardType: TextInputType.visiblePassword,
+                    obscureText: true,
+                    enableSuggestions: false,
+                    autocorrect: false,
+                    decoration: const InputDecoration(
+                      hintText: "Password",
+                    ),
+                  ), // for password
+                  TextButton(
+                    onPressed: () async {
+                      final email = _email.text;
+                      final password = _password.text;
+                      final userCred = await FirebaseAuth.instance
+                          .createUserWithEmailAndPassword(
+                              email: email, password: password);
+                      print(userCred); // pring in logs
+                    },
+                    child: const Text("Register"),
+                  ),
+                ]);
+              default:
+                print("Loading...");
+                return Text("Loading...");
+            }
+          }),
     );
   }
 }
